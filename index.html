@@ -2825,31 +2825,47 @@ function updateCart(productId, delta, variantId = "", customizationText = "", cu
     
     function renderCatalog() {
       el.catalog.innerHTML = getSortedProducts().map(product => {
-        if (product.purchasable && product.status === "active") {
-          const qty = getCartQuantity(product.id);
-          return `
-            <article class="product-card">
-              <div class="product-open">
-  <div class="product-media">
-    ${imageHtml(product.coverImage, product.shortName)}
-    <button class="see-more-btn" type="button" data-product-detail="${product.id}">
-      Ver más
-    </button>
-  </div>
-  <div class="product-info">
-    <h2 class="product-name">${product.shortName}</h2>
-  </div>
-</div>
-              <div class="product-controls">
-                <div class="stepper">
-                  <button class="stepper-btn" data-cart-action="minus" data-product-id="${product.id}" type="button" aria-label="Quitar una caja" ${qty <= 0 ? "disabled" : ""}>−</button>
-                  <div class="stepper-value">${qty}</div>
-                  <button class="stepper-btn" data-cart-action="plus" data-product-id="${product.id}" type="button" aria-label="Agregar una caja">+</button>
-                </div>
+if (product.purchasable && product.status === "active") {
+  const qty = getCartQuantity(product.id);
+  const hasVariants = productHasVariants(product.id);
+
+  return `
+    <article class="product-card">
+      <div class="product-open">
+        <div class="product-media">
+          ${imageHtml(product.coverImage, product.shortName)}
+          <button class="see-more-btn" type="button" data-product-detail="${product.id}">
+            Ver más
+          </button>
+        </div>
+        <div class="product-info">
+          <h2 class="product-name">${product.shortName}</h2>
+        </div>
+      </div>
+
+      <div class="product-controls">
+        ${
+          hasVariants
+            ? `
+              <button class="primary-btn ready" type="button" data-product-variants="${product.id}" style="width:100%; min-height:48px; border-radius:14px;">
+                Elegir
+              </button>
+              <div style="margin-top:6px; text-align:center; font-size:.74rem; color:var(--muted); font-weight:700;">
+                ${qty > 0 ? `${qty} seleccionado${qty === 1 ? "" : "s"}` : "Elige una opción"}
               </div>
-            </article>
-          `;
+            `
+            : `
+              <div class="stepper">
+                <button class="stepper-btn" data-cart-action="minus" data-product-id="${product.id}" type="button" aria-label="Quitar una unidad" ${qty <= 0 ? "disabled" : ""}>−</button>
+                <div class="stepper-value">${qty}</div>
+                <button class="stepper-btn" data-cart-action="plus" data-product-id="${product.id}" type="button" aria-label="Agregar una unidad">+</button>
+              </div>
+            `
         }
+      </div>
+    </article>
+  `;
+}
 
         if (product.status === "coming_soon" || product.type === "coming_soon") {
           return `
@@ -2891,7 +2907,13 @@ function updateCart(productId, delta, variantId = "", customizationText = "", cu
           openSheet("detail");
         });
       });
-
+$$('[data-product-variants]').forEach(btn => {
+  btn.addEventListener("click", () => {
+    state.activeVariantProductId = btn.dataset.productVariants;
+    renderVariantSheet();
+    openSheet("variant");
+  });
+});
       $$('[data-cart-action="minus"]').forEach(btn => {
         btn.addEventListener("click", () => updateCart(btn.dataset.productId, -1));
       });
@@ -2912,7 +2934,67 @@ function updateCart(productId, delta, variantId = "", customizationText = "", cu
         ${product.purchasable ? `<p class="detail-price-text">${money(product.price)}</p>` : `<p class="detail-price-text">Coming Soon</p>`}
       `;
     }
-    
+ function renderVariantSheet() {
+  const product = getProduct(state.activeVariantProductId);
+  const variants = getProductVariants(state.activeVariantProductId)
+    .filter(variant => variant.status === "active");
+
+  if (!product || !variants.length) {
+    el.variantTitle.textContent = "Elige tu opción";
+    el.variantBody.innerHTML = `
+      <div class="helper-card">
+        <strong>Sin opciones disponibles</strong>
+        <p>Este producto todavía no tiene variantes activas configuradas.</p>
+      </div>
+    `;
+    return;
+  }
+
+  el.variantTitle.textContent = product.shortName || product.name;
+
+  el.variantBody.innerHTML = `
+    <div class="variant-options">
+      ${variants.map(variant => `
+        <button class="variant-card" type="button" data-add-variant="${variant.id}">
+          ${imageHtml(variant.image || product.coverImage, variant.name)}
+          <div class="variant-info">
+            <strong>${variant.name}</strong>
+            <span>${variant.description || product.description || ""}</span>
+            <span class="variant-price">${money(variant.price)}</span>
+          </div>
+        </button>
+      `).join("")}
+    </div>
+
+    <div class="variant-note">
+      Si eliges una opción personalizada, por ahora puedes detallar tu combinación en observaciones al finalizar el pedido.
+    </div>
+  `;
+
+  $$('[data-add-variant]').forEach(btn => {
+    btn.addEventListener("click", () => {
+      const variant = getVariant(btn.dataset.addVariant);
+
+      if (!variant) return;
+
+      updateCart(
+        product.id,
+        1,
+        variant.id,
+        variant.requiresCustomization ? "Personalización pendiente por observaciones" : "",
+        variant.requiresCustomization
+          ? {
+              type: variant.customizationType || "",
+              note: "Cliente detallará la personalización en observaciones."
+            }
+          : null
+      );
+
+      closeSheets();
+      showToast(`${variant.name} agregado al carrito.`, "success");
+    });
+  });
+}   
 function renderCartBar() {
   const qty = getCartQuantity();
   const total = getCartTotal();
@@ -3413,18 +3495,20 @@ function setActivePageTab(pageName = "products") {
     }
 
     function closeSheets() {
-      state.openSheet = null;
-      el.overlay.classList.remove("active");
-      el.detailSheet.classList.remove("active");
-      el.cartSheet.classList.remove("active");
-    }
+  state.openSheet = null;
+  el.overlay.classList.remove("active");
+  el.detailSheet.classList.remove("active");
+  el.variantSheet.classList.remove("active");
+  el.cartSheet.classList.remove("active");
+}
 
-    function openSheet(name) {
-      state.openSheet = name;
-      el.overlay.classList.add("active");
-      el.detailSheet.classList.toggle("active", name === "detail");
-      el.cartSheet.classList.toggle("active", name === "cart");
-    }
+function openSheet(name) {
+  state.openSheet = name;
+  el.overlay.classList.add("active");
+  el.detailSheet.classList.toggle("active", name === "detail");
+  el.variantSheet.classList.toggle("active", name === "variant");
+  el.cartSheet.classList.toggle("active", name === "cart");
+}
 
     function showMain() {
       showProductsPage();
@@ -3636,6 +3720,7 @@ function setActivePageTab(pageName = "products") {
     $("#checkoutBtn").addEventListener("click", goToCheckout);
     $("#closeCartBtn").addEventListener("click", closeSheets);
     $("#closeDetailBtn").addEventListener("click", closeSheets);
+    $("#closeVariantBtn").addEventListener("click", closeSheets);
     $("#overlay").addEventListener("click", closeSheets);
 
     $("#backBtn").addEventListener("click", goBackStep);
