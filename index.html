@@ -2016,9 +2016,16 @@
         <button class="primary-wide" id="newOrderBtn" type="button">Hacer otro pedido</button>
       </div>
     </section>
-
     <div class="overlay" id="overlay"></div>
-
+    
+<section class="sheet" id="detailSheet" aria-label="Detalle del producto">
+  <div class="sheet-head">
+    <h3 class="sheet-title" id="detailTitle">Galletas rellenas</h3>
+    <button class="icon-btn" id="closeDetailBtn" type="button" aria-label="Cerrar detalle">×</button>
+  </div>
+  <div class="detail-body" id="detailBody"></div>
+</section>
+    
 <section class="sheet" id="variantSheet" aria-label="Elegir opción del producto">
   <div class="sheet-head">
     <h3 class="sheet-title" id="variantTitle">Elige tu opción</h3>
@@ -3494,20 +3501,20 @@ function setActivePageTab(pageName = "products") {
       $("#confirmWhatsAppBtn").classList.toggle("ready", step4Ready);
     }
 
-    function closeSheets() {
+function closeSheets() {
   state.openSheet = null;
-  el.overlay.classList.remove("active");
-  el.detailSheet.classList.remove("active");
-  el.variantSheet.classList.remove("active");
-  el.cartSheet.classList.remove("active");
+  el.overlay?.classList.remove("active");
+  el.detailSheet?.classList.remove("active");
+  el.variantSheet?.classList.remove("active");
+  el.cartSheet?.classList.remove("active");
 }
-
+    
 function openSheet(name) {
   state.openSheet = name;
-  el.overlay.classList.add("active");
-  el.detailSheet.classList.toggle("active", name === "detail");
-  el.variantSheet.classList.toggle("active", name === "variant");
-  el.cartSheet.classList.toggle("active", name === "cart");
+  el.overlay?.classList.add("active");
+  el.detailSheet?.classList.toggle("active", name === "detail");
+  el.variantSheet?.classList.toggle("active", name === "variant");
+  el.cartSheet?.classList.toggle("active", name === "cart");
 }
 
     function showMain() {
@@ -3718,11 +3725,11 @@ function openSheet(name) {
       openSheet("cart");
     });
     $("#checkoutBtn").addEventListener("click", goToCheckout);
-    $("#closeCartBtn").addEventListener("click", closeSheets);
-    $("#closeDetailBtn").addEventListener("click", closeSheets);
-    $("#closeVariantBtn").addEventListener("click", closeSheets);
-    $("#overlay").addEventListener("click", closeSheets);
-
+    $("#closeCartBtn")?.addEventListener("click", closeSheets);
+$("#closeDetailBtn")?.addEventListener("click", closeSheets);
+$("#closeVariantBtn")?.addEventListener("click", closeSheets);
+$("#overlay")?.addEventListener("click", closeSheets);
+    
     $("#backBtn").addEventListener("click", goBackStep);
     $("#cancelBtn").addEventListener("click", cancelCheckout);
 
