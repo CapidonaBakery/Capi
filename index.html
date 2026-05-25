@@ -1762,6 +1762,77 @@
   color: var(--brown-strong);
   font-weight: 900;
 }
+
+/* =========================
+   SELECTOR DE VARIANTES
+   ========================= */
+
+.variant-options {
+  display: grid;
+  gap: 10px;
+}
+
+.variant-card {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.variant-card:active {
+  transform: scale(.98);
+}
+
+.variant-card img {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  object-fit: cover;
+  background: var(--surface-2);
+}
+
+.variant-info strong {
+  display: block;
+  color: var(--brown-strong);
+  font-size: .9rem;
+  line-height: 1.15;
+  font-weight: 900;
+}
+
+.variant-info span {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: .78rem;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+.variant-price {
+  margin-top: 5px !important;
+  color: var(--brown-strong) !important;
+  font-weight: 900 !important;
+}
+
+.variant-note {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: .82rem;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
     
   </style>
 </head>
@@ -1948,13 +2019,13 @@
 
     <div class="overlay" id="overlay"></div>
 
-    <section class="sheet" id="detailSheet" aria-label="Detalle del producto">
-      <div class="sheet-head">
-        <h3 class="sheet-title" id="detailTitle">Galletas rellenas</h3>
-        <button class="icon-btn" id="closeDetailBtn" type="button" aria-label="Cerrar detalle">×</button>
-      </div>
-      <div class="detail-body" id="detailBody"></div>
-    </section>
+<section class="sheet" id="variantSheet" aria-label="Elegir opción del producto">
+  <div class="sheet-head">
+    <h3 class="sheet-title" id="variantTitle">Elige tu opción</h3>
+    <button class="icon-btn" id="closeVariantBtn" type="button" aria-label="Cerrar opciones">×</button>
+  </div>
+  <div class="detail-body" id="variantBody"></div>
+</section>
 
     <section class="sheet" id="cartSheet" aria-label="Detalle del carrito">
       <div class="sheet-head">
@@ -2112,7 +2183,9 @@
           active: true
         }
       ],
-
+      
+variants: [],
+      
      products: [
   {
     id: "cookies_box_6",
@@ -2159,12 +2232,13 @@
     /* =========================================================
        2. ESTADO
        ========================================================= */
-    const state = {
-      view: "main",
-      activeStep: 1,
-      openSheet: null,
-      activeDetailProductId: "cookies_box_6",
-      lastOrderNumber: "",
+const state = {
+  view: "main",
+  activeStep: 1,
+  openSheet: null,
+  activeDetailProductId: "cookies_box_6",
+  activeVariantProductId: "",
+  lastOrderNumber: "",
       cart: {
         items: []
       },
@@ -2205,6 +2279,9 @@
       detailSheet: $("#detailSheet"),
       detailTitle: $("#detailTitle"),
       detailBody: $("#detailBody"),
+      variantSheet: $("#variantSheet"),
+      variantTitle: $("#variantTitle"),
+      variantBody: $("#variantBody"),
       overlay: $("#overlay"),
       toast: $("#toast"),
       customerName: $("#customerName"),
@@ -2422,6 +2499,7 @@ async function loadRemoteConfig() {
       if (remote.configuracionPagina) Object.assign(CONFIG.pageContent, remote.configuracionPagina);
       if (Array.isArray(remote.products)) CONFIG.products = remote.products;
       if (Array.isArray(remote.catalog)) CONFIG.products = remote.catalog;
+      if (Array.isArray(remote.variants)) CONFIG.variants = remote.variants;
       if (Array.isArray(remote.scheduleRules)) CONFIG.scheduleRules = remote.scheduleRules;
       if (Array.isArray(remote.blockedDates)) CONFIG.blockedDates = remote.blockedDates;
       if (Array.isArray(remote.paymentMethods)) CONFIG.paymentMethods = remote.paymentMethods;
@@ -2504,39 +2582,77 @@ async function loadRemoteConfig() {
     function getProduct(productId) {
       return CONFIG.products.find(product => product.id === productId) || CONFIG.products.find(product => product.purchasable);
     }
+    
+function getProductVariants(productId) {
+  return clone(CONFIG.variants || [])
+    .filter(variant => variant.productId === productId && variant.status !== "hidden")
+    .sort((a, b) => Number(a.order || 99) - Number(b.order || 99));
+}
 
+function getVariant(variantId) {
+  return (CONFIG.variants || []).find(variant => variant.id === variantId) || null;
+}
+
+function productHasVariants(productId) {
+  return getProductVariants(productId).length > 0;
+}
+
+function makeCartKey(productId, variantId = "", customizationText = "") {
+  return [
+    productId || "",
+    variantId || "",
+    customizationText || ""
+  ].join("__");
+}
+    
     function getPrimaryProduct() {
       return CONFIG.products.find(product => product.purchasable) || CONFIG.products[0];
     }
 
-    function getCartItem(productId) {
-      return state.cart.items.find(item => item.productId === productId);
-    }
+function getCartItem(productId, variantId = "", customizationText = "") {
+  const cartKey = makeCartKey(productId, variantId, customizationText);
 
-    function getCartQuantity(productId = null) {
-      if (productId) return getCartItem(productId)?.quantity || 0;
-      return state.cart.items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
-    }
+  return state.cart.items.find(item => {
+    if (item.cartKey) return item.cartKey === cartKey;
 
-    function getCartTotal() {
-      return state.cart.items.reduce((sum, item) => {
-        const product = getProduct(item.productId);
-        return sum + Number(item.quantity || 0) * Number(product?.price || item.unitPrice || 0);
-      }, 0);
-    }
+    return item.productId === productId && !variantId;
+  });
+}
 
-    function getCartLines() {
-      return state.cart.items.map(item => {
-        const product = getProduct(item.productId);
-        return {
-          ...item,
-          product,
-          quantity: Number(item.quantity || 0),
-          unitPrice: Number(product?.price || item.unitPrice || 0),
-          subtotal: Number(item.quantity || 0) * Number(product?.price || item.unitPrice || 0)
-        };
-      }).filter(line => line.quantity > 0 && line.product);
-    }
+function getCartQuantity(productId = null, variantId = "") {
+  if (productId) {
+    if (variantId) return getCartItem(productId, variantId)?.quantity || 0;
+
+    return state.cart.items
+      .filter(item => item.productId === productId)
+      .reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+  }
+
+  return state.cart.items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+}
+
+function getCartTotal() {
+  return state.cart.items.reduce((sum, item) => {
+    return sum + Number(item.quantity || 0) * Number(item.unitPrice || 0);
+  }, 0);
+}
+
+function getCartLines() {
+  return state.cart.items.map(item => {
+    const product = getProduct(item.productId);
+    const variant = item.variantId ? getVariant(item.variantId) : null;
+    const unitPrice = Number(item.unitPrice || variant?.price || product?.price || 0);
+
+    return {
+      ...item,
+      product,
+      variant,
+      quantity: Number(item.quantity || 0),
+      unitPrice,
+      subtotal: Number(item.quantity || 0) * unitPrice
+    };
+  }).filter(line => line.quantity > 0 && line.product);
+}
 
     function pluralizeProducts(qty) {
   return `${qty} ${qty === 1 ? "producto" : "productos"}`;
@@ -2562,20 +2678,34 @@ function formatCartProductNames(lines) {
   return `${names.slice(0, 2).join(", ")} y ${names.length - 2} más + envío`;
 }
 
-    function updateCart(productId, delta) {
-      const product = getProduct(productId);
-      if (!product || !product.purchasable) return;
+function updateCart(productId, delta, variantId = "", customizationText = "", customizationJson = null) {
+  const product = getProduct(productId);
+  if (!product || !product.purchasable) return;
 
-      const current = getCartItem(productId);
-      if (!current && delta > 0) {
-        state.cart.items.push({ productId, quantity: delta, unitPrice: product.price });
-      } else if (current) {
-        current.quantity = Math.max(0, Number(current.quantity || 0) + delta);
-      }
+  const variant = variantId ? getVariant(variantId) : null;
+  const unitPrice = Number(variant?.price || product.price || 0);
+  const cartKey = makeCartKey(productId, variantId, customizationText);
 
-      state.cart.items = state.cart.items.filter(item => Number(item.quantity || 0) > 0);
-      renderAll();
-    }
+  const current = getCartItem(productId, variantId, customizationText);
+
+  if (!current && delta > 0) {
+    state.cart.items.push({
+      cartKey,
+      productId,
+      variantId,
+      variantName: variant?.name || "",
+      quantity: delta,
+      unitPrice,
+      customizationText: customizationText || "",
+      customizationJson: customizationJson || null
+    });
+  } else if (current) {
+    current.quantity = Math.max(0, Number(current.quantity || 0) + delta);
+  }
+
+  state.cart.items = state.cart.items.filter(item => Number(item.quantity || 0) > 0);
+  renderAll();
+}
 
     function clearOrderData() {
       state.cart.items = [];
