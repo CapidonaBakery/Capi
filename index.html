@@ -1764,65 +1764,110 @@
 }
 
 /* =========================
-   SELECTOR DE VARIANTES
+   SELECTOR DE VARIANTES CENTRADO
    ========================= */
+
+#variantSheet {
+  top: 50%;
+  bottom: auto;
+  max-height: calc(100dvh - 72px);
+  transform: translateY(calc(-50% + 24px));
+}
+
+#variantSheet.active {
+  transform: translateY(-50%);
+}
+
+#variantSheet .detail-body {
+  padding: 0 16px 16px;
+  overflow-y: auto;
+}
 
 .variant-options {
   display: grid;
-  gap: 10px;
+  gap: 16px;
 }
 
 .variant-card {
   width: 100%;
   display: grid;
-  grid-template-columns: 56px 1fr;
   gap: 10px;
-  align-items: center;
-  padding: 10px;
-  border-radius: 18px;
+  padding: 12px;
+  border-radius: 22px;
   border: 1px solid var(--line);
   background: #fff;
-  text-align: left;
+  box-shadow: 0 8px 18px rgba(95, 61, 50, 0.07);
+}
+
+.variant-image {
+  width: 100%;
+  max-height: 210px;
+  aspect-ratio: 1.25 / 1;
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--surface-2);
   cursor: pointer;
 }
 
-.variant-card:active {
-  transform: scale(.98);
-}
-
-.variant-card img {
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
+.variant-image img,
+.variant-image .image-fallback {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  background: var(--surface-2);
 }
 
-.variant-info strong {
-  display: block;
-  color: var(--brown-strong);
-  font-size: .9rem;
-  line-height: 1.15;
-  font-weight: 900;
-}
-
-.variant-info span {
-  display: block;
-  margin-top: 3px;
+.variant-description {
+  margin: 0;
+  padding: 9px 11px;
+  border-radius: 15px;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
   color: var(--muted);
-  font-size: .78rem;
-  line-height: 1.25;
-  font-weight: 700;
+  font-size: .82rem;
+  line-height: 1.32;
+  font-weight: 750;
+}
+
+.variant-description ul {
+  margin: 0;
+  padding-left: 17px;
+}
+
+.variant-description li {
+  margin: 2px 0;
 }
 
 .variant-price {
-  margin-top: 5px !important;
-  color: var(--brown-strong) !important;
-  font-weight: 900 !important;
+  text-align: center;
+  color: var(--brown-strong);
+  font-size: 1.24rem;
+  line-height: 1.1;
+  font-weight: 950;
+  margin-top: 0;
+}
+
+.variant-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 48px;
+  padding: 4px;
+  border-radius: 16px;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+}
+
+.variant-qty {
+  flex: 1 1 auto;
+  text-align: center;
+  color: var(--brown-strong);
+  font-size: 1rem;
+  font-weight: 900;
 }
 
 .variant-note {
-  margin-top: 10px;
+  margin-top: 12px;
   padding: 10px 12px;
   border-radius: 16px;
   background: var(--bg-soft);
@@ -1833,6 +1878,40 @@
   font-weight: 700;
 }
 
+/* =========================
+   VISOR DE IMAGEN GRANDE
+   ========================= */
+
+#imageViewerSheet {
+  top: 50%;
+  bottom: auto;
+  max-height: calc(100dvh - 60px);
+  transform: translateY(calc(-50% + 24px));
+}
+
+#imageViewerSheet.active {
+  transform: translateY(-50%);
+}
+
+#imageViewerBody {
+  padding: 0 16px 16px;
+  overflow-y: auto;
+}
+
+.viewer-image-wrap {
+  width: 100%;
+  border-radius: 22px;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+
+.viewer-image-wrap img,
+.viewer-image-wrap .image-fallback {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
     
   </style>
 </head>
@@ -2024,6 +2103,14 @@
     <button class="icon-btn" id="closeDetailBtn" type="button" aria-label="Cerrar detalle">×</button>
   </div>
   <div class="detail-body" id="detailBody"></div>
+</section>
+
+<section class="sheet" id="imageViewerSheet" aria-label="Vista ampliada de imagen">
+  <div class="sheet-head">
+    <h3 class="sheet-title">Vista del producto</h3>
+    <button class="icon-btn" id="closeImageViewerBtn" type="button" aria-label="Cerrar imagen">×</button>
+  </div>
+  <div class="detail-body" id="imageViewerBody"></div>
 </section>
     
 <section class="sheet" id="variantSheet" aria-label="Elegir opción del producto">
@@ -2289,6 +2376,8 @@ const state = {
       variantSheet: $("#variantSheet"),
       variantTitle: $("#variantTitle"),
       variantBody: $("#variantBody"),
+      imageViewerSheet: $("#imageViewerSheet"),
+      imageViewerBody: $("#imageViewerBody"),
       overlay: $("#overlay"),
       toast: $("#toast"),
       customerName: $("#customerName"),
@@ -2410,6 +2499,39 @@ const state = {
       if (!resolved) return `<div class="image-fallback">${alt || "CAPIDONA"}</div>`;
       return `<img src="${resolved}" alt="${alt || "CAPIDONA"}" onerror="this.replaceWith(Object.assign(document.createElement('div'), {className:'image-fallback', textContent:'Imagen no disponible'}))" />`;
     }
+
+    function variantDescriptionHtml(text) {
+  const clean = String(text || "").trim();
+
+  if (!clean) return "";
+
+  if (clean.includes("|")) {
+    const items = clean
+      .split("|")
+      .map(item => item.trim())
+      .filter(Boolean);
+
+    if (!items.length) return "";
+
+    return `
+      <div class="variant-description">
+        <ul>
+          ${items.map(item => `<li>${item}</li>`).join("")}
+        </ul>
+      </div>
+    `;
+  }
+
+  return `<p class="variant-description">${clean}</p>`;
+}
+
+function renderImageViewer(src) {
+  el.imageViewerBody.innerHTML = `
+    <div class="viewer-image-wrap">
+      ${imageHtml(src, "Vista ampliada del producto")}
+    </div>
+  `;
+}
 
     /* =========================================================
        5. CONFIGURACIÓN REMOTA / SHEETS
@@ -2941,7 +3063,8 @@ $$('[data-product-variants]').forEach(btn => {
         ${product.purchasable ? `<p class="detail-price-text">${money(product.price)}</p>` : `<p class="detail-price-text">Coming Soon</p>`}
       `;
     }
- function renderVariantSheet() {
+    
+function renderVariantSheet() {
   const product = getProduct(state.activeVariantProductId);
   const variants = getProductVariants(state.activeVariantProductId)
     .filter(variant => variant.status === "active");
@@ -2961,34 +3084,69 @@ $$('[data-product-variants]').forEach(btn => {
 
   el.variantBody.innerHTML = `
     <div class="variant-options">
-      ${variants.map(variant => `
-        <button class="variant-card" type="button" data-add-variant="${variant.id}">
-          ${imageHtml(variant.image || product.coverImage, variant.name)}
-          <div class="variant-info">
-            <strong>${variant.name}</strong>
-            <span>${variant.description || product.description || ""}</span>
-            <span class="variant-price">${money(variant.price)}</span>
-          </div>
-        </button>
-      `).join("")}
+      ${variants.map(variant => {
+        const customizationText = variant.requiresCustomization
+          ? "Personalización pendiente por observaciones"
+          : "";
+
+        const qty = getCartQuantity(product.id, variant.id);
+        const variantImage = variant.image || product.coverImage;
+
+        return `
+          <article class="variant-card">
+            <div
+              class="variant-image"
+              data-zoom-image="${resolveImagePath(variantImage)}"
+            >
+              ${imageHtml(variantImage, variant.name)}
+            </div>
+
+            ${variantDescriptionHtml(variant.description)}
+
+            <div class="variant-price">${money(variant.price)}</div>
+
+            <div class="variant-actions">
+              <button
+                class="stepper-btn"
+                type="button"
+                data-variant-action="minus"
+                data-product-id="${product.id}"
+                data-variant-id="${variant.id}"
+                data-customization-text="${customizationText}"
+                ${qty <= 0 ? "disabled" : ""}
+              >−</button>
+
+              <div class="variant-qty">${qty}</div>
+
+              <button
+                class="stepper-btn"
+                type="button"
+                data-variant-action="plus"
+                data-product-id="${product.id}"
+                data-variant-id="${variant.id}"
+                data-customization-text="${customizationText}"
+              >+</button>
+            </div>
+          </article>
+        `;
+      }).join("")}
     </div>
 
     <div class="variant-note">
-      Si eliges una opción personalizada, por ahora puedes detallar tu combinación en observaciones al finalizar el pedido.
+      Si eliges una opción personalizada, puedes detallar tu combinación en observaciones al finalizar el pedido.
     </div>
   `;
 
-  $$('[data-add-variant]').forEach(btn => {
+  $$('[data-variant-action="plus"]').forEach(btn => {
     btn.addEventListener("click", () => {
-      const variant = getVariant(btn.dataset.addVariant);
-
+      const variant = getVariant(btn.dataset.variantId);
       if (!variant) return;
 
       updateCart(
-        product.id,
+        btn.dataset.productId,
         1,
         variant.id,
-        variant.requiresCustomization ? "Personalización pendiente por observaciones" : "",
+        btn.dataset.customizationText || "",
         variant.requiresCustomization
           ? {
               type: variant.customizationType || "",
@@ -2997,11 +3155,41 @@ $$('[data-product-variants]').forEach(btn => {
           : null
       );
 
-      closeSheets();
-      showToast(`${variant.name} agregado al carrito.`, "success");
+      state.activeVariantProductId = btn.dataset.productId;
+      renderVariantSheet();
+      renderCartSheet();
+      renderCartBar();
     });
   });
-}   
+
+  $$('[data-variant-action="minus"]').forEach(btn => {
+    btn.addEventListener("click", () => {
+      const variant = getVariant(btn.dataset.variantId);
+      if (!variant) return;
+
+      updateCart(
+        btn.dataset.productId,
+        -1,
+        variant.id,
+        btn.dataset.customizationText || "",
+        null
+      );
+
+      state.activeVariantProductId = btn.dataset.productId;
+      renderVariantSheet();
+      renderCartSheet();
+      renderCartBar();
+    });
+  });
+
+  $$('[data-zoom-image]').forEach(box => {
+    box.addEventListener("click", () => {
+      renderImageViewer(box.dataset.zoomImage);
+      openSheet("imageViewer");
+    });
+  });
+}
+    
 function renderCartBar() {
   const qty = getCartQuantity();
   const total = getCartTotal();
@@ -3507,6 +3695,7 @@ function closeSheets() {
   el.detailSheet?.classList.remove("active");
   el.variantSheet?.classList.remove("active");
   el.cartSheet?.classList.remove("active");
+  el.imageViewerSheet?.classList.remove("active");
 }
     
 function openSheet(name) {
@@ -3515,6 +3704,7 @@ function openSheet(name) {
   el.detailSheet?.classList.toggle("active", name === "detail");
   el.variantSheet?.classList.toggle("active", name === "variant");
   el.cartSheet?.classList.toggle("active", name === "cart");
+  el.imageViewerSheet?.classList.toggle("active", name === "imageViewer");
 }
 
     function showMain() {
@@ -3728,6 +3918,7 @@ function openSheet(name) {
     $("#closeCartBtn")?.addEventListener("click", closeSheets);
 $("#closeDetailBtn")?.addEventListener("click", closeSheets);
 $("#closeVariantBtn")?.addEventListener("click", closeSheets);
+$("#closeImageViewerBtn")?.addEventListener("click", closeSheets);
 $("#overlay")?.addEventListener("click", closeSheets);
     
     $("#backBtn").addEventListener("click", goBackStep);
