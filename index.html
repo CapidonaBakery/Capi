@@ -2886,6 +2886,10 @@ function getActiveCategoryId() {
   return state.activeCategoryId;
 }
 
+function productHasVariants(productId) {
+  return productRequiresConfig(productId) || getProductVariants(productId).length > 0;
+}
+    
 function getProductsByCategory(categoryId) {
   const cleanCategoryId = String(categoryId || "").trim();
   const defaultCategoryId = getDefaultCategoryId();
@@ -3145,15 +3149,60 @@ function formatCartProductNames(lines) {
   return `${names.slice(0, 2).join(", ")} y ${names.length - 2} más + envío`;
 }
 
-function updateCart(productId, delta, variantId = "", customizationText = "", customizationJson = null) {
+function updateCart(productId, delta, variantId = "", customizationText = "", customizationJson = null, extra = {}) {
   const product = getProduct(productId);
   if (!product || !product.purchasable) return;
 
   const variant = variantId ? getVariant(variantId) : null;
-  const unitPrice = Number(variant?.price || product.price || 0);
-  const cartKey = makeCartKey(productId, variantId, customizationText);
 
-  const current = getCartItem(productId, variantId, customizationText);
+  const unitPrice = Number(
+    extra.unitPrice ??
+    variant?.price ??
+    product.price ??
+    product.precio ??
+    0
+  );
+
+  const categoryId = String(
+    extra.categoryId ||
+    getProductCategoryId(product) ||
+    ""
+  ).trim();
+
+  const categoryName = String(
+    extra.categoryName ||
+    getCategoryName(categoryId) ||
+    ""
+  ).trim();
+
+  const requiresConfig = typeof extra.requiresConfig !== "undefined"
+    ? truthyFlag(extra.requiresConfig)
+    : productRequiresConfig(productId);
+
+  const configType = String(
+    extra.configType ||
+    product.configType ||
+    product.config_type ||
+    "none"
+  ).trim();
+
+  const configurationText = String(
+    extra.configurationText ||
+    customizationText ||
+    ""
+  ).trim();
+
+  const configurationJson = typeof extra.configurationJson !== "undefined"
+    ? extra.configurationJson
+    : customizationJson;
+
+  const cartKey = extra.cartKey || makeCartKey(
+    productId,
+    variantId,
+    configurationText || customizationText
+  );
+
+  const current = state.cart.items.find(item => item.cartKey === cartKey);
 
   if (!current && delta > 0) {
     state.cart.items.push({
@@ -3163,8 +3212,16 @@ function updateCart(productId, delta, variantId = "", customizationText = "", cu
       variantName: variant?.name || "",
       quantity: delta,
       unitPrice,
-      customizationText: customizationText || "",
-      customizationJson: customizationJson || null
+
+      customizationText: customizationText || configurationText || "",
+      customizationJson: customizationJson || configurationJson || null,
+
+      categoryId,
+      categoryName,
+      requiresConfig,
+      configType,
+      configurationText,
+      configurationJson: configurationJson || null
     });
   } else if (current) {
     current.quantity = Math.max(0, Number(current.quantity || 0) + delta);
