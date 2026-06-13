@@ -1300,35 +1300,41 @@
       --header-h: 300px;
     }
 
-    .section-tabs {
-      width: 100%;
-      display: flex;
-      gap: 8px;
-      margin: 8px 0 0;
-      padding: 4px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.64);
-      border: 1px solid rgba(255,255,255,.86);
-      box-shadow: var(--shadow-soft);
-    }
+.section-tabs {
+  width: 100%;
+  display: flex;
+  gap: 10px;
+  margin: 10px 0 0;
+  padding: 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.78);
+  border: 1px solid rgba(255,255,255,.92);
+  box-shadow: 0 10px 24px rgba(83,54,48,.08);
+}
 
-    .section-tab {
-      flex: 1 1 0;
-      min-height: 38px;
-      padding: 0 8px;
-      border-radius: 999px;
-      color: var(--brown-strong);
-      font-size: .75rem;
-      line-height: 1.1;
-      font-weight: 900;
-      text-align: center;
-      cursor: pointer;
-      transition: background var(--transition), color var(--transition), transform var(--transition), opacity var(--transition);
-    }
+.section-tab {
+  flex: 1 1 0;
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: 999px;
+  color: #5a372d;
+  font-size: .88rem;
+  line-height: 1.1;
+  font-weight: 950;
+  text-align: center;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition), transform var(--transition), opacity var(--transition), box-shadow var(--transition);
+}
 
-    .section-tab:active {
-      transform: scale(.98);
-    }
+.section-tab:active {
+  transform: scale(.98);
+}
+
+.section-tab.active {
+  background: linear-gradient(180deg, #dca0aa 0%, #a36a58 100%);
+  color: #fff;
+  box-shadow: 0 10px 20px rgba(140,90,75,.22);
+}
 
     .section-tab.active {
       background: linear-gradient(180deg, #efb0b9 0%, var(--pink-strong) 100%);
@@ -2567,7 +2573,77 @@
   }
 }
 
+/* =========================
+   AJUSTE VISUAL PRODUCTOS
+   ========================= */
 
+.catalog-rail .product-card {
+  width: 100% !important;
+  min-width: 0 !important;
+  aspect-ratio: auto !important;
+  border-radius: 22px !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  background: rgba(255,255,255,.82) !important;
+}
+
+.catalog-rail .product-open {
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.catalog-rail .product-media {
+  position: relative !important;
+  width: 100% !important;
+  aspect-ratio: 1 / 1 !important;
+  min-height: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #fff !important;
+  padding: 8px !important;
+  overflow: hidden !important;
+}
+
+.catalog-rail .product-media img,
+.catalog-rail .product-media .image-fallback {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  display: block !important;
+}
+
+.catalog-rail .product-info {
+  min-height: 54px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 8px 10px 4px !important;
+}
+
+.catalog-rail .product-name {
+  margin: 0 !important;
+  font-size: .88rem !important;
+  line-height: 1.15 !important;
+  font-weight: 950 !important;
+  text-align: center !important;
+  color: var(--brown-strong) !important;
+}
+
+.catalog-rail .product-controls,
+.catalog-rail .product-foot {
+  padding: 0 10px 10px !important;
+  margin-top: auto !important;
+}
+
+.catalog-rail .see-more-btn {
+  right: 10px !important;
+  bottom: 10px !important;
+  left: auto !important;
+}
     
   </style>
 </head>
@@ -2599,7 +2675,6 @@
   <div class="category-tabs" id="categoryTabs" aria-label="Categorías de productos"></div>
 
   <p class="brand-guide brand-guide-catalog">
-    Elige tu producto y solicita tu pedido ágilmente.
   </p>
 
   <div class="catalog-rail" id="catalog"></div>
