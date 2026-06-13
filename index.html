@@ -2278,8 +2278,17 @@
         }
       ],
       
-variants: [],
-      
+categories: [
+  { id: "cookies", categoryId: "cookies", name: "Galletas rellenas", nombre: "Galletas rellenas", status: "active", estado: "active", order: 1, orden: 1 },
+  { id: "cakes", categoryId: "cakes", name: "Tortas", nombre: "Tortas", status: "active", estado: "active", order: 2, orden: 2 },
+  { id: "rolls", categoryId: "rolls", name: "Rollos", nombre: "Rollos", status: "active", estado: "active", order: 3, orden: 3 },
+  { id: "promos", categoryId: "promos", name: "Promos", nombre: "Promos", status: "active", estado: "active", order: 4, orden: 4 }
+],
+
+productOptions: [],
+
+optionValues: [],
+
      products: [
   {
     id: "cookies_box_6",
@@ -2536,7 +2545,7 @@ function renderImageViewer(src) {
     /* =========================================================
        5. CONFIGURACIÓN REMOTA / SHEETS
        ========================================================= */
-const CONFIG_CACHE_KEY = "CAPIDONA_LAST_REMOTE_CONFIG_V7";
+const CONFIG_CACHE_KEY = "CAPIDONA_LAST_REMOTE_CONFIG_V45";
     function saveRemoteConfigCache(configData) {
   try {
     localStorage.setItem(CONFIG_CACHE_KEY, JSON.stringify(configData));
@@ -2626,9 +2635,13 @@ async function loadRemoteConfig() {
       if (remote.contact) Object.assign(CONFIG.contact, remote.contact);
       if (remote.pageContent) Object.assign(CONFIG.pageContent, remote.pageContent);
       if (remote.configuracionPagina) Object.assign(CONFIG.pageContent, remote.configuracionPagina);
-      if (Array.isArray(remote.products)) CONFIG.products = remote.products;
-      if (Array.isArray(remote.catalog)) CONFIG.products = remote.catalog;
-      if (Array.isArray(remote.variants)) CONFIG.variants = remote.variants;
+if (Array.isArray(remote.products)) CONFIG.products = remote.products;
+if (Array.isArray(remote.catalog)) CONFIG.products = remote.catalog;
+
+if (Array.isArray(remote.categories)) CONFIG.categories = remote.categories;
+if (Array.isArray(remote.productOptions)) CONFIG.productOptions = remote.productOptions;
+if (Array.isArray(remote.optionValues)) CONFIG.optionValues = remote.optionValues;
+
       if (Array.isArray(remote.scheduleRules)) CONFIG.scheduleRules = remote.scheduleRules;
       if (Array.isArray(remote.blockedDates)) CONFIG.blockedDates = remote.blockedDates;
       if (Array.isArray(remote.paymentMethods)) CONFIG.paymentMethods = remote.paymentMethods;
