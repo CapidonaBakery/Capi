@@ -2376,6 +2376,191 @@
     font-size: .8rem;
   }
 }    
+
+/* =========================
+   RESET FINAL CATÁLOGO V4.5
+   ========================= */
+
+.main-body {
+  height: calc(100dvh - var(--header-h) - var(--cart-h) - env(safe-area-inset-bottom, 0px)) !important;
+  padding: 0 0 10px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 8px !important;
+  overflow: hidden !important;
+}
+
+.category-tabs {
+  width: 100% !important;
+  flex: 0 0 auto !important;
+  display: flex !important;
+  gap: 10px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  padding: 0 16px 4px !important;
+  scroll-snap-type: x proximity !important;
+  scrollbar-width: none !important;
+}
+
+.category-tabs::-webkit-scrollbar {
+  display: none !important;
+}
+
+.category-tab {
+  flex: 0 0 auto !important;
+  min-width: 132px !important;
+  min-height: 40px !important;
+  padding: 0 16px !important;
+  border-radius: 999px !important;
+  background: rgba(255,255,255,.72) !important;
+  border: 1px solid rgba(255,255,255,.9) !important;
+  color: var(--brown-strong) !important;
+  font-size: .76rem !important;
+  font-weight: 900 !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+  box-shadow: 0 8px 18px rgba(83,54,48,.08) !important;
+}
+
+.category-tab.active {
+  background: linear-gradient(180deg, #efb0b9 0%, var(--pink-strong) 100%) !important;
+  color: #fff !important;
+}
+
+.brand-guide-catalog {
+  flex: 0 0 auto !important;
+  margin: 0 16px 2px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--muted) !important;
+  font-size: .86rem !important;
+  line-height: 1.25 !important;
+  font-weight: 750 !important;
+}
+
+.catalog-rail {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  width: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 2px 16px 8px !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  align-content: start !important;
+  scroll-snap-type: none !important;
+}
+
+.catalog-empty {
+  grid-column: 1 / -1 !important;
+  min-width: 0 !important;
+  padding: 18px !important;
+  border-radius: 20px !important;
+  background: rgba(255,255,255,.72) !important;
+  border: 1px solid rgba(255,255,255,.9) !important;
+  color: var(--muted) !important;
+  font-size: .86rem !important;
+  font-weight: 800 !important;
+  text-align: center !important;
+}
+
+.catalog-rail .product-card {
+  width: 100% !important;
+  min-width: 0 !important;
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 22px !important;
+  overflow: hidden !important;
+  display: grid !important;
+  grid-template-rows: 1fr auto !important;
+  flex: initial !important;
+}
+
+.catalog-rail .product-open {
+  width: 100% !important;
+  min-height: 0 !important;
+  display: grid !important;
+  grid-template-rows: 1fr auto !important;
+}
+
+.catalog-rail .product-media {
+  position: relative !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  aspect-ratio: 1 / 1 !important;
+  overflow: hidden !important;
+}
+
+.catalog-rail .product-media img,
+.catalog-rail .product-media .image-fallback {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+.catalog-rail .product-info {
+  padding: 8px 10px 4px !important;
+}
+
+.catalog-rail .product-name {
+  margin: 0 !important;
+  font-size: .86rem !important;
+  line-height: 1.15 !important;
+  font-weight: 900 !important;
+  text-align: center !important;
+  color: var(--brown-strong) !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+
+.catalog-rail .product-controls,
+.catalog-rail .product-foot {
+  padding: 0 10px 10px !important;
+  margin-top: 0 !important;
+}
+
+.catalog-rail .status-badge {
+  top: 8px !important;
+  left: 8px !important;
+  right: auto !important;
+  padding: 6px 8px !important;
+  font-size: .58rem !important;
+  z-index: 2 !important;
+}
+
+.catalog-rail .see-more-btn {
+  right: 8px !important;
+  left: auto !important;
+  bottom: 8px !important;
+  z-index: 2 !important;
+}
+
+.catalog-rail .stepper {
+  min-height: 46px !important;
+}
+
+@media (max-width: 360px) {
+  .category-tab {
+    min-width: 118px !important;
+  }
+
+  .catalog-rail {
+    gap: 10px !important;
+  }
+
+  .catalog-rail .product-name {
+    font-size: .8rem !important;
+  }
+}
+
+
     
   </style>
 </head>
@@ -2757,6 +2942,9 @@ productOptions: [],
 
 optionValues: [],
 
+// Compatibilidad temporal con lógica antigua.
+variants: [],
+      
      products: [
   {
     id: "cookies_box_6",
@@ -3015,7 +3203,7 @@ function renderImageViewer(src) {
     /* =========================================================
        5. CONFIGURACIÓN REMOTA / SHEETS
        ========================================================= */
-const CONFIG_CACHE_KEY = "CAPIDONA_LAST_REMOTE_CONFIG_V45";
+const CONFIG_CACHE_KEY = "CAPIDONA_LAST_REMOTE_CONFIG_V46_CATALOG";
     function saveRemoteConfigCache(configData) {
   try {
     localStorage.setItem(CONFIG_CACHE_KEY, JSON.stringify(configData));
@@ -3185,22 +3373,82 @@ if (Array.isArray(remote.optionValues)) CONFIG.optionValues = remote.optionValue
     /* =========================================================
        6. PRODUCTOS Y CARRITO
        ========================================================= */
-    function getSortedProducts() {
-      return clone(CONFIG.products)
-        .filter(product => product.status !== "hidden")
-        .sort((a, b) => Number(a.order || 99) - Number(b.order || 99));
-    }
+function normalizeProduct(product = {}) {
+  const productId = String(product.id || product.productId || product.product_id || "").trim();
+  const status = String(product.status || product.estado || product.type || "").trim();
+
+  return {
+    ...product,
+
+    id: productId,
+    productId: productId,
+    product_id: productId,
+
+    status: status,
+    estado: status,
+    type: status,
+
+    purchasable: truthyFlag(product.purchasable ?? product.comprable),
+    comprable: truthyFlag(product.purchasable ?? product.comprable),
+
+    name: product.name || product.nombre || product.shortName || product.short_name || "",
+    nombre: product.name || product.nombre || product.shortName || product.short_name || "",
+
+    shortName: product.shortName || product.short_name || product.name || product.nombre || "",
+    short_name: product.shortName || product.short_name || product.name || product.nombre || "",
+
+    price: Number(product.price ?? product.precio ?? 0),
+    precio: Number(product.price ?? product.precio ?? 0),
+
+    coverImage: product.coverImage || product.imagen_portada || "",
+    imagen_portada: product.coverImage || product.imagen_portada || "",
+
+    detailImage: product.detailImage || product.imagen_detalle || product.coverImage || product.imagen_portada || "",
+    imagen_detalle: product.detailImage || product.imagen_detalle || product.coverImage || product.imagen_portada || "",
+
+    description: product.description || product.descripcion || "",
+    descripcion: product.description || product.descripcion || "",
+
+    order: Number(product.order || product.orden || 99),
+    orden: Number(product.order || product.orden || 99),
+
+    categoryId: product.categoryId || product.category_id || "",
+    category_id: product.categoryId || product.category_id || "",
+
+    badge: product.badge || "",
+
+    requiresConfig: product.requiresConfig ?? product.requires_config ?? false,
+    requires_config: product.requiresConfig ?? product.requires_config ?? false,
+
+    configType: product.configType || product.config_type || "none",
+    config_type: product.configType || product.config_type || "none",
+
+    configId: product.configId || product.config_id || "",
+    config_id: product.configId || product.config_id || ""
+  };
+}
+
+function getSortedProducts() {
+  return clone(CONFIG.products || [])
+    .map(normalizeProduct)
+    .filter(product => product.id && product.status !== "hidden")
+    .sort((a, b) => Number(a.order || 99) - Number(b.order || 99));
+}
 
 function getProduct(productId) {
-      return CONFIG.products.find(product => product.id === productId) || CONFIG.products.find(product => product.purchasable);
-    }
+  const cleanId = String(productId || "").trim();
+
+  return getSortedProducts().find(product => product.id === cleanId)
+    || getSortedProducts().find(product => product.purchasable)
+    || null;
+}
 
 function truthyFlag(value) {
   if (typeof value === "boolean") return value;
 
   const clean = String(value || "").trim().toLowerCase();
 
-  return ["true", "1", "sí", "si", "yes", "y"].includes(clean);
+  return ["true", "1", "sí", "si", "yes", "y", "active", "activo"].includes(clean);
 }
 
 function getSortedCategories() {
@@ -3243,10 +3491,6 @@ function getActiveCategoryId() {
   return state.activeCategoryId;
 }
 
-function productHasVariants(productId) {
-  return productRequiresConfig(productId) || getProductVariants(productId).length > 0;
-}
-    
 function getProductsByCategory(categoryId) {
   const cleanCategoryId = String(categoryId || "").trim();
   const defaultCategoryId = getDefaultCategoryId();
@@ -3254,8 +3498,6 @@ function getProductsByCategory(categoryId) {
   return getSortedProducts().filter(product => {
     const productCategoryId = getProductCategoryId(product);
 
-    // Compatibilidad temporal: si algún producto viejo no tiene categoría,
-    // se muestra solo en la primera categoría.
     if (!productCategoryId) {
       return cleanCategoryId === defaultCategoryId;
     }
@@ -3264,15 +3506,62 @@ function getProductsByCategory(categoryId) {
   });
 }
 
+function getProductVariants(productId) {
+  const cleanProductId = String(productId || "").trim();
+  const variants = Array.isArray(CONFIG.variants) ? CONFIG.variants : [];
+
+  return variants
+    .filter(variant => {
+      const variantProductId = String(
+        variant.productId ||
+        variant.product_id ||
+        variant.parentProductId ||
+        variant.parent_product_id ||
+        ""
+      ).trim();
+
+      const status = String(variant.status || variant.estado || "").trim();
+
+      return variantProductId === cleanProductId && status !== "hidden";
+    })
+    .sort((a, b) => Number(a.order || a.orden || 99) - Number(b.order || b.orden || 99));
+}
+
+function getVariant(variantId) {
+  const cleanVariantId = String(variantId || "").trim();
+  const variants = Array.isArray(CONFIG.variants) ? CONFIG.variants : [];
+
+  return variants.find(variant => {
+    const currentId = String(variant.id || variant.variantId || variant.variant_id || "").trim();
+    return currentId === cleanVariantId;
+  }) || null;
+}
+
 function productRequiresConfig(productId) {
   const product = getProduct(productId);
 
   if (!product) return false;
 
-  const requiresConfig = truthyFlag(product.requiresConfig || product.requires_config);
+  const requiresConfig = truthyFlag(product.requiresConfig ?? product.requires_config);
   const configType = String(product.configType || product.config_type || "none").trim();
 
   return requiresConfig && configType !== "none";
+}
+
+function productHasVariants(productId) {
+  return productRequiresConfig(productId) || getProductVariants(productId).length > 0;
+}
+
+function makeCartKey(productId, variantId = "", customizationText = "") {
+  return [
+    productId || "",
+    variantId || "",
+    customizationText || ""
+  ].join("__");
+}
+
+function getPrimaryProduct() {
+  return getSortedProducts().find(product => product.purchasable) || getSortedProducts()[0] || null;
 }
 
 function getProductOption(productId) {
@@ -3435,7 +3724,8 @@ function buildSingleChoiceConfigurationJson(optionId, configId = "") {
     selectedOptionName: option.name || option.nombre || "",
     finalPrice: option.finalPrice ?? option.precio_final ?? null
   };
-}  
+}
+
 
 function getCartItem(productId, variantId = "", customizationText = "") {
   const cartKey = makeCartKey(productId, variantId, customizationText);
@@ -3737,6 +4027,39 @@ function renderCategoryTabs() {
   });
 }   
 
+function renderCategoryTabs() {
+  const categories = getSortedCategories();
+
+  if (!el.categoryTabs) return;
+
+  if (!categories.length) {
+    el.categoryTabs.innerHTML = "";
+    return;
+  }
+
+  const activeCategoryId = getActiveCategoryId();
+
+  el.categoryTabs.innerHTML = categories.map(category => {
+    const categoryId = String(category.id || category.categoryId || category.category_id || "").trim();
+    const categoryName = category.name || category.nombre || categoryId;
+    const isActive = categoryId === activeCategoryId;
+
+    return `
+      <button class="category-tab ${isActive ? "active" : ""}" type="button" data-category-id="${categoryId}">
+        ${categoryName}
+      </button>
+    `;
+  }).join("");
+
+  $$("[data-category-id]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      state.activeCategoryId = btn.dataset.categoryId;
+      renderCategoryTabs();
+      renderCatalog();
+    });
+  });
+}
+
 function renderCatalog() {
   const activeCategoryId = getActiveCategoryId();
 
@@ -3756,7 +4079,7 @@ function renderCatalog() {
 
   el.catalog.innerHTML = productsToRender.map(product => {
     const status = String(product.status || product.estado || "").trim();
-    const purchasable = !!(product.purchasable ?? product.comprable);
+    const purchasable = truthyFlag(product.purchasable ?? product.comprable);
     const shortName = product.shortName || product.short_name || product.name || product.nombre || "";
     const coverImage = product.coverImage || product.imagen_portada || "";
     const badge = product.badge || "";
