@@ -1929,6 +1929,129 @@
 }
 
 /* =========================
+   CONFIGURADOR V4.5
+   ========================= */
+
+.config-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.config-title {
+  margin: 0;
+  color: var(--brown-strong);
+  font-size: .95rem;
+  font-weight: 950;
+  line-height: 1.25;
+}
+
+.config-help {
+  margin: 0;
+  color: var(--muted);
+  font-size: .8rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.config-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid var(--line);
+  box-shadow: 0 8px 18px rgba(95, 61, 50, 0.06);
+}
+
+.config-name {
+  color: var(--brown-strong);
+  font-size: .9rem;
+  font-weight: 950;
+}
+
+.config-desc {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: .76rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.config-counter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px;
+  border-radius: 15px;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+}
+
+.config-count {
+  min-width: 24px;
+  text-align: center;
+  color: var(--brown-strong);
+  font-weight: 950;
+}
+
+.config-total {
+  padding: 11px 12px;
+  border-radius: 16px;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  color: var(--brown-strong);
+  font-size: .84rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.config-choice-card {
+  width: 100%;
+  display: grid;
+  gap: 4px;
+  padding: 13px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(95, 61, 50, 0.06);
+}
+
+.config-choice-card.active {
+  border-color: var(--pink-strong);
+  background: rgba(239,176,185,.16);
+}
+
+.config-choice-name {
+  color: var(--brown-strong);
+  font-size: .9rem;
+  font-weight: 950;
+}
+
+.config-choice-desc {
+  color: var(--muted);
+  font-size: .76rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.config-choice-price {
+  margin-top: 4px;
+  color: var(--brown-strong);
+  font-size: .92rem;
+  font-weight: 950;
+}
+
+.config-add-btn {
+  width: 100%;
+  min-height: 48px;
+  border-radius: 16px;
+}
+    
+/* =========================
    VISOR DE IMAGEN GRANDE
    ========================= */
 
@@ -3509,128 +3632,266 @@ function renderCatalog() {
     
 function renderVariantSheet() {
   const product = getProduct(state.activeVariantProductId);
-  const variants = getProductVariants(state.activeVariantProductId)
-    .filter(variant => variant.status === "active");
 
-  if (!product || !variants.length) {
+  if (!product) {
     el.variantTitle.textContent = "Elige tu opción";
     el.variantBody.innerHTML = `
       <div class="helper-card">
-        <strong>Sin opciones disponibles</strong>
-        <p>Este producto todavía no tiene variantes activas configuradas.</p>
+        <strong>Producto no disponible</strong>
+        <p>No se pudo cargar la configuración de este producto.</p>
       </div>
     `;
     return;
   }
 
+  const config = getProductConfig(product.id);
+  const option = config.option;
+  const configId = config.configId;
+  const configType = config.configType;
+  const values = config.values || [];
+
   el.variantTitle.textContent = product.shortName || product.name;
 
+  if (!productRequiresConfig(product.id) || !option || !values.length) {
+    el.variantBody.innerHTML = `
+      <div class="helper-card">
+        <strong>Sin configuración disponible</strong>
+        <p>Este producto todavía no tiene opciones activas configuradas.</p>
+      </div>
+    `;
+    return;
+  }
+
+  if (configType === "cookie_flavors_6") {
+    const maxSelection = Number(option.maxSelection || option.max_seleccion || 6);
+    const minSelection = Number(option.minSelection || option.min_seleccion || 6);
+
+    el.variantBody.innerHTML = `
+      <div class="config-panel">
+        <p class="config-title">${option.title || option.titulo || "Elige tus rellenos"}</p>
+        <p class="config-help">Selecciona exactamente ${maxSelection} unidades en total.</p>
+
+        ${values.map(value => {
+          const optionId = String(value.optionId || value.option_id || "").trim();
+          const optionName = value.name || value.nombre || optionId;
+          const optionDescription = value.description || value.descripcion || "";
+
+          return `
+            <div class="config-row" data-flavor-row="${optionId}">
+              <div>
+                <div class="config-name">${optionName}</div>
+                ${optionDescription ? `<div class="config-desc">${optionDescription}</div>` : ""}
+              </div>
+
+              <div class="config-counter">
+                <button class="stepper-btn" type="button" data-flavor-minus="${optionId}" disabled>−</button>
+                <div class="config-count" data-flavor-count="${optionId}">0</div>
+                <button class="stepper-btn" type="button" data-flavor-plus="${optionId}">+</button>
+              </div>
+            </div>
+          `;
+        }).join("")}
+
+        <div class="config-total" id="flavorConfigTotal">
+          0 de ${maxSelection} seleccionadas
+        </div>
+
+        <button class="primary-btn config-add-btn" id="addFlavorConfigBtn" type="button" disabled>
+          Agregar caja personalizada
+        </button>
+      </div>
+    `;
+
+    const readQuantities = () => {
+      const quantities = {};
+
+      values.forEach(value => {
+        const optionId = String(value.optionId || value.option_id || "").trim();
+        const countEl = document.querySelector(`[data-flavor-count="${optionId}"]`);
+        quantities[optionId] = Number(countEl?.textContent || 0);
+      });
+
+      return quantities;
+    };
+
+    const getTotalSelected = () => {
+      const quantities = readQuantities();
+      return Object.values(quantities).reduce((sum, qty) => sum + Number(qty || 0), 0);
+    };
+
+    const refreshFlavorControls = () => {
+      const total = getTotalSelected();
+      const addBtn = $("#addFlavorConfigBtn");
+      const totalEl = $("#flavorConfigTotal");
+
+      if (totalEl) {
+        totalEl.textContent = `${total} de ${maxSelection} seleccionadas`;
+      }
+
+      values.forEach(value => {
+        const optionId = String(value.optionId || value.option_id || "").trim();
+        const countEl = document.querySelector(`[data-flavor-count="${optionId}"]`);
+        const minusBtn = document.querySelector(`[data-flavor-minus="${optionId}"]`);
+        const plusBtn = document.querySelector(`[data-flavor-plus="${optionId}"]`);
+        const qty = Number(countEl?.textContent || 0);
+
+        if (minusBtn) minusBtn.disabled = qty <= 0;
+        if (plusBtn) plusBtn.disabled = total >= maxSelection;
+      });
+
+      if (addBtn) {
+        addBtn.disabled = total < minSelection || total > maxSelection;
+        addBtn.classList.toggle("ready", !addBtn.disabled);
+      }
+    };
+
+    $$("[data-flavor-plus]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const optionId = btn.dataset.flavorPlus;
+        const total = getTotalSelected();
+
+        if (total >= maxSelection) return;
+
+        const countEl = document.querySelector(`[data-flavor-count="${optionId}"]`);
+        countEl.textContent = String(Number(countEl.textContent || 0) + 1);
+
+        refreshFlavorControls();
+      });
+    });
+
+    $$("[data-flavor-minus]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const optionId = btn.dataset.flavorMinus;
+        const countEl = document.querySelector(`[data-flavor-count="${optionId}"]`);
+        const current = Number(countEl.textContent || 0);
+
+        countEl.textContent = String(Math.max(0, current - 1));
+
+        refreshFlavorControls();
+      });
+    });
+
+    $("#addFlavorConfigBtn")?.addEventListener("click", () => {
+      const quantities = readQuantities();
+      const configurationText = buildFlavorConfigurationText(quantities, configId);
+      const configurationJson = buildFlavorConfigurationJson(quantities, configId);
+      const unitPrice = getConfiguredUnitPrice(product.id);
+
+      if (!configurationText) {
+        showToast("Elige los rellenos antes de agregar.", "error");
+        return;
+      }
+
+      updateCart(
+        product.id,
+        1,
+        "",
+        configurationText,
+        configurationJson,
+        {
+          unitPrice,
+          categoryId: getProductCategoryId(product),
+          categoryName: getCategoryName(getProductCategoryId(product)),
+          requiresConfig: true,
+          configType,
+          configurationText,
+          configurationJson
+        }
+      );
+
+      closeSheets();
+      showToast("Caja personalizada agregada.", "success");
+    });
+
+    refreshFlavorControls();
+    return;
+  }
+
+  if (configType === "promo_combo") {
+    el.variantBody.innerHTML = `
+      <div class="config-panel">
+        <p class="config-title">${option.title || option.titulo || "Elige tu combinación"}</p>
+        <p class="config-help">Selecciona una opción para agregar la promo al carrito.</p>
+
+        ${values.map(value => {
+          const optionId = String(value.optionId || value.option_id || "").trim();
+          const optionName = value.name || value.nombre || optionId;
+          const optionDescription = value.description || value.descripcion || "";
+          const unitPrice = getConfiguredUnitPrice(product.id, optionId);
+
+          return `
+            <button class="config-choice-card" type="button" data-promo-option="${optionId}">
+              <span class="config-choice-name">${optionName}</span>
+              ${optionDescription ? `<span class="config-choice-desc">${optionDescription}</span>` : ""}
+              <span class="config-choice-price">${money(unitPrice)}</span>
+            </button>
+          `;
+        }).join("")}
+
+        <button class="primary-btn config-add-btn" id="addPromoConfigBtn" type="button" disabled>
+          Agregar promo
+        </button>
+      </div>
+    `;
+
+    let selectedOptionId = "";
+
+    $$("[data-promo-option]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        selectedOptionId = btn.dataset.promoOption;
+
+        $$("[data-promo-option]").forEach(item => {
+          item.classList.toggle("active", item.dataset.promoOption === selectedOptionId);
+        });
+
+        const addBtn = $("#addPromoConfigBtn");
+        if (addBtn) {
+          addBtn.disabled = false;
+          addBtn.classList.add("ready");
+        }
+      });
+    });
+
+    $("#addPromoConfigBtn")?.addEventListener("click", () => {
+      if (!selectedOptionId) {
+        showToast("Elige una combinación antes de agregar.", "error");
+        return;
+      }
+
+      const configurationText = buildSingleChoiceConfigurationText(selectedOptionId, configId);
+      const configurationJson = buildSingleChoiceConfigurationJson(selectedOptionId, configId);
+      const unitPrice = getConfiguredUnitPrice(product.id, selectedOptionId);
+
+      updateCart(
+        product.id,
+        1,
+        "",
+        configurationText,
+        configurationJson,
+        {
+          unitPrice,
+          categoryId: getProductCategoryId(product),
+          categoryName: getCategoryName(getProductCategoryId(product)),
+          requiresConfig: true,
+          configType,
+          configurationText,
+          configurationJson
+        }
+      );
+
+      closeSheets();
+      showToast("Promo agregada.", "success");
+    });
+
+    return;
+  }
+
   el.variantBody.innerHTML = `
-    <div class="variant-options">
-      ${variants.map(variant => {
-        const customizationText = variant.requiresCustomization
-          ? "Personalización pendiente por observaciones"
-          : "";
-
-        const qty = getCartQuantity(product.id, variant.id);
-        const variantImage = variant.image || product.coverImage;
-
-        return `
-          <article class="variant-card">
-            <div
-              class="variant-image"
-              data-zoom-image="${resolveImagePath(variantImage)}"
-            >
-              ${imageHtml(variantImage, variant.name)}
-            </div>
-
-            ${variantDescriptionHtml(variant.description)}
-
-            <div class="variant-price">${money(variant.price)}</div>
-
-            <div class="variant-actions">
-              <button
-                class="stepper-btn"
-                type="button"
-                data-variant-action="minus"
-                data-product-id="${product.id}"
-                data-variant-id="${variant.id}"
-                data-customization-text="${customizationText}"
-                ${qty <= 0 ? "disabled" : ""}
-              >−</button>
-
-              <div class="variant-qty">${qty}</div>
-
-              <button
-                class="stepper-btn"
-                type="button"
-                data-variant-action="plus"
-                data-product-id="${product.id}"
-                data-variant-id="${variant.id}"
-                data-customization-text="${customizationText}"
-              >+</button>
-            </div>
-          </article>
-        `;
-      }).join("")}
-    </div>
-
-    <div class="variant-note">
-      Si eliges una opción personalizada, puedes detallar tu combinación en observaciones al finalizar el pedido.
+    <div class="helper-card">
+      <strong>Configuración no reconocida</strong>
+      <p>Este tipo de configuración todavía no está preparado en la web.</p>
     </div>
   `;
-
-  $$('[data-variant-action="plus"]').forEach(btn => {
-    btn.addEventListener("click", () => {
-      const variant = getVariant(btn.dataset.variantId);
-      if (!variant) return;
-
-      updateCart(
-        btn.dataset.productId,
-        1,
-        variant.id,
-        btn.dataset.customizationText || "",
-        variant.requiresCustomization
-          ? {
-              type: variant.customizationType || "",
-              note: "Cliente detallará la personalización en observaciones."
-            }
-          : null
-      );
-
-      state.activeVariantProductId = btn.dataset.productId;
-      renderVariantSheet();
-      renderCartSheet();
-      renderCartBar();
-    });
-  });
-
-  $$('[data-variant-action="minus"]').forEach(btn => {
-    btn.addEventListener("click", () => {
-      const variant = getVariant(btn.dataset.variantId);
-      if (!variant) return;
-
-      updateCart(
-        btn.dataset.productId,
-        -1,
-        variant.id,
-        btn.dataset.customizationText || "",
-        null
-      );
-
-      state.activeVariantProductId = btn.dataset.productId;
-      renderVariantSheet();
-      renderCartSheet();
-      renderCartBar();
-    });
-  });
-
-  $$('[data-zoom-image]').forEach(box => {
-    box.addEventListener("click", () => {
-      renderImageViewer(box.dataset.zoomImage);
-      openSheet("imageViewer");
-    });
-  });
 }
     
 function renderCartBar() {
