@@ -2212,6 +2212,170 @@
   }
 }
 
+/* =========================
+   AJUSTE 3.3-C: CATEGORÍAS HORIZONTALES + GRID REAL DE PRODUCTOS
+   ========================= */
+
+.main-body {
+  height: calc(100dvh - var(--header-h) - var(--cart-h) - env(safe-area-inset-bottom, 0px));
+  padding: 0 0 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.category-tabs {
+  width: 100%;
+  flex: 0 0 auto;
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0 16px 4px;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+
+.category-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.category-tab {
+  flex: 0 0 auto;
+  min-width: 132px;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  text-align: center;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.brand-guide-catalog {
+  flex: 0 0 auto;
+  margin: 0 16px 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--muted);
+  font-size: .86rem;
+  line-height: 1.25;
+  font-weight: 750;
+}
+
+.catalog-rail {
+  flex: 1 1 auto !important;
+  min-height: 0;
+  width: 100%;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 2px 16px 8px !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  align-content: start;
+  scroll-snap-type: none !important;
+}
+
+.catalog-empty {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.catalog-rail .product-card {
+  width: 100% !important;
+  min-width: 0 !important;
+  aspect-ratio: 1 / 1;
+  border-radius: 22px;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  flex: initial !important;
+}
+
+.catalog-rail .product-open {
+  width: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: 1fr auto;
+}
+
+.catalog-rail .product-media {
+  position: relative;
+  min-height: 0;
+  height: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+}
+
+.catalog-rail .product-media img,
+.catalog-rail .product-media picture,
+.catalog-rail .product-media .img-fallback {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.catalog-rail .product-info {
+  padding: 8px 10px 4px;
+}
+
+.catalog-rail .product-name {
+  margin: 0;
+  font-size: .86rem;
+  line-height: 1.15;
+  font-weight: 900;
+  text-align: center;
+  color: var(--brown-strong);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.catalog-rail .product-controls,
+.catalog-rail .product-foot {
+  padding: 0 10px 10px;
+  margin-top: 0;
+}
+
+.catalog-rail .status-badge {
+  top: 8px;
+  left: 8px;
+  right: auto;
+  padding: 6px 8px;
+  font-size: .58rem;
+  z-index: 2;
+}
+
+.catalog-rail .see-more-btn {
+  right: 8px;
+  left: auto;
+  bottom: 8px;
+  z-index: 2;
+}
+
+.catalog-rail .stepper {
+  min-height: 46px;
+}
+
+@media (max-width: 360px) {
+  .category-tab {
+    min-width: 118px;
+  }
+
+  .catalog-rail {
+    gap: 10px !important;
+  }
+
+  .catalog-rail .product-name {
+    font-size: .8rem;
+  }
+}    
     
   </style>
 </head>
@@ -3575,7 +3739,11 @@ function renderCategoryTabs() {
 
 function renderCatalog() {
   const activeCategoryId = getActiveCategoryId();
-  const productsToRender = getProductsByCategory(activeCategoryId);
+
+  const productsToRender = getProductsByCategory(activeCategoryId).filter(product => {
+    const status = String(product.status || product.estado || "").trim();
+    return status === "active" || status === "coming_soon";
+  });
 
   if (!productsToRender.length) {
     el.catalog.innerHTML = `
@@ -3587,22 +3755,28 @@ function renderCatalog() {
   }
 
   el.catalog.innerHTML = productsToRender.map(product => {
-    if (product.purchasable && product.status === "active") {
-      const qty = getCartQuantity(product.id);
-      const hasVariants = productHasVariants(product.id);
+    const status = String(product.status || product.estado || "").trim();
+    const purchasable = !!(product.purchasable ?? product.comprable);
+    const shortName = product.shortName || product.short_name || product.name || product.nombre || "";
+    const coverImage = product.coverImage || product.imagen_portada || "";
+    const badge = product.badge || "";
+    const qty = getCartQuantity(product.id);
+    const hasVariants = productHasVariants(product.id);
 
+    if (purchasable && status === "active") {
       return `
         <article class="product-card">
           <div class="product-open">
             <div class="product-media">
-              ${imageHtml(product.coverImage, product.shortName)}
-              ${product.badge ? `<span class="status-badge">${product.badge}</span>` : ""}
+              ${imageHtml(coverImage, shortName)}
+              ${badge ? `<span class="status-badge">${badge}</span>` : ""}
               <button class="see-more-btn" type="button" data-product-detail="${product.id}">
                 Ver más
               </button>
             </div>
+
             <div class="product-info">
-              <h2 class="product-name">${product.shortName}</h2>
+              <h2 class="product-name">${shortName}</h2>
             </div>
           </div>
 
@@ -3610,10 +3784,10 @@ function renderCatalog() {
             ${
               hasVariants
                 ? `
-                  <button class="primary-btn ready" type="button" data-product-variants="${product.id}" style="width:100%; min-height:48px; border-radius:14px;">
+                  <button class="primary-btn ready" type="button" data-product-variants="${product.id}" style="width:100%; min-height:46px; border-radius:14px;">
                     Elegir
                   </button>
-                  <div style="margin-top:6px; text-align:center; font-size:.74rem; color:var(--muted); font-weight:700;">
+                  <div style="margin-top:6px; text-align:center; font-size:.72rem; color:var(--muted); font-weight:700;">
                     ${qty > 0 ? `${qty} seleccionado${qty === 1 ? "" : "s"}` : "Elige una opción"}
                   </div>
                 `
@@ -3630,31 +3804,14 @@ function renderCatalog() {
       `;
     }
 
-    if (product.status === "coming_soon" || product.type === "coming_soon") {
-      return `
-        <article class="product-card">
-          <div class="product-media">
-            ${imageHtml(product.coverImage, product.shortName)}
-            <span class="status-badge">Coming Soon</span>
-          </div>
-          <div class="product-info">
-            <h2 class="product-name">${product.shortName}</h2>
-          </div>
-          <div class="product-foot">
-            <div class="soon-pill">Coming Soon</div>
-          </div>
-        </article>
-      `;
-    }
-
     return `
       <article class="product-card teaser" aria-hidden="true">
         <div class="product-media">
-          ${product.coverImage ? imageHtml(product.coverImage, product.shortName) : `<div class="teaser-mark">?</div>`}
+          ${coverImage ? imageHtml(coverImage, shortName) : `<div class="teaser-mark">?</div>`}
           <span class="status-badge">Muy pronto</span>
         </div>
         <div class="product-info">
-          <h2 class="product-name">${product.shortName}</h2>
+          <h2 class="product-name">${shortName}</h2>
         </div>
         <div class="product-foot">
           <div class="teaser-pill">Muy pronto</div>
