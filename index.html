@@ -2494,13 +2494,20 @@
   height: 100% !important;
   aspect-ratio: 1 / 1 !important;
   overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #f6eee8 !important;
+  padding: 10px !important;
+  border-radius: 18px 18px 0 0 !important;
 }
 
 .catalog-rail .product-media img,
 .catalog-rail .product-media .image-fallback {
   width: 100% !important;
   height: 100% !important;
-  object-fit: cover !important;
+  object-fit: contain !important;
+  object-position: center !important;
 }
 
 .catalog-rail .product-info {
