@@ -2087,7 +2087,7 @@
 }
 
 /* =========================
-   AJUSTE 3.3-A: CATEGORÍAS + MENSAJE BAJO CATEGORÍAS
+   AJUSTE 3.3-B: BARRA HORIZONTAL + PRODUCTOS CUADRADOS
    ========================= */
 
 .main-body {
@@ -2103,27 +2103,33 @@
 .category-tabs {
   width: 100%;
   flex: 0 0 auto;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  overflow: visible;
-  padding: 0 26px;
-  scroll-snap-type: none;
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0 16px 4px;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+
+.category-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .category-tab {
-  width: 100%;
-  min-width: 0;
-  min-height: 34px;
-  padding: 0 10px;
+  flex: 0 0 auto;
+  min-width: 132px;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
   text-align: center;
-  white-space: normal;
-  line-height: 1.05;
+  white-space: nowrap;
+  line-height: 1;
 }
 
 .brand-guide-catalog {
   flex: 0 0 auto;
-  margin: 2px 29px 4px;
+  margin: 0 16px 2px;
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -2139,7 +2145,71 @@
   flex: 1 1 auto;
   min-height: 0;
   width: 100%;
-  padding: 2px 16px 4px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 2px 16px 8px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-content: start;
+}
+
+.catalog-empty {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.product-card {
+  aspect-ratio: 1 / 1;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  overflow: hidden;
+}
+
+.product-open {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: 1fr auto;
+}
+
+.product-media {
+  min-height: 0;
+  height: 100%;
+}
+
+.product-media img,
+.product-media picture,
+.product-media .img-fallback {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-info {
+  padding-top: 8px;
+}
+
+.product-name {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-align: center;
+}
+
+.product-controls {
+  margin-top: 8px;
+}
+
+@media (max-width: 360px) {
+  .category-tab {
+    min-width: 118px;
+  }
+
+  .catalog-rail {
+    gap: 10px;
+  }
 }
 
     
