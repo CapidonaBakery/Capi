@@ -1962,6 +1962,63 @@
   display: block;
   object-fit: cover;
 }
+
+/* =========================
+   AJUSTE 3.3-A: CATEGORÍAS + MENSAJE BAJO CATEGORÍAS
+   ========================= */
+
+.main-body {
+  height: calc(100dvh - var(--header-h) - var(--cart-h) - env(safe-area-inset-bottom, 0px));
+  padding: 0 0 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.category-tabs {
+  width: 100%;
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  overflow: visible;
+  padding: 0 26px;
+  scroll-snap-type: none;
+}
+
+.category-tab {
+  width: 100%;
+  min-width: 0;
+  min-height: 34px;
+  padding: 0 10px;
+  text-align: center;
+  white-space: normal;
+  line-height: 1.05;
+}
+
+.brand-guide-catalog {
+  flex: 0 0 auto;
+  margin: 2px 29px 4px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--muted);
+  font-size: .86rem;
+  line-height: 1.25;
+  font-weight: 750;
+}
+
+.catalog-rail {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  padding: 2px 16px 4px;
+}
+
     
   </style>
 </head>
@@ -1986,13 +2043,16 @@
             <button class="section-tab" type="button" data-page-tab="about">Quiénes somos</button>
             <button class="section-tab" type="button" data-page-tab="contact">Contacto</button>
           </nav>
-
-          <p class="brand-guide">Elige tu producto y solicita tu pedido ágilmente.</p>
         </div>
       </header>
 
 <div class="main-body">
   <div class="category-tabs" id="categoryTabs" aria-label="Categorías de productos"></div>
+
+  <p class="brand-guide brand-guide-catalog">
+    Elige tu producto y solicita tu pedido ágilmente.
+  </p>
+
   <div class="catalog-rail" id="catalog"></div>
 </div>
 
