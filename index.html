@@ -2341,6 +2341,7 @@ const state = {
   openSheet: null,
   activeDetailProductId: "cookies_box_6",
   activeVariantProductId: "",
+  activeCategoryId: "",
   lastOrderNumber: "",
       cart: {
         items: []
@@ -2721,35 +2722,238 @@ if (Array.isArray(remote.optionValues)) CONFIG.optionValues = remote.optionValue
         .sort((a, b) => Number(a.order || 99) - Number(b.order || 99));
     }
 
-    function getProduct(productId) {
+function getProduct(productId) {
       return CONFIG.products.find(product => product.id === productId) || CONFIG.products.find(product => product.purchasable);
     }
-    
-function getProductVariants(productId) {
-  return clone(CONFIG.variants || [])
-    .filter(variant => variant.productId === productId && variant.status !== "hidden")
-    .sort((a, b) => Number(a.order || 99) - Number(b.order || 99));
+
+function truthyFlag(value) {
+  if (typeof value === "boolean") return value;
+
+  const clean = String(value || "").trim().toLowerCase();
+
+  return ["true", "1", "sí", "si", "yes", "y"].includes(clean);
 }
 
-function getVariant(variantId) {
-  return (CONFIG.variants || []).find(variant => variant.id === variantId) || null;
+function getSortedCategories() {
+  return clone(CONFIG.categories || [])
+    .filter(category => {
+      const status = String(category.status || category.estado || "").trim();
+      return status && status !== "hidden";
+    })
+    .sort((a, b) => Number(a.order || a.orden || 99) - Number(b.order || b.orden || 99));
 }
 
-function productHasVariants(productId) {
-  return getProductVariants(productId).length > 0;
+function getCategory(categoryId) {
+  const cleanId = String(categoryId || "").trim();
+
+  return getSortedCategories().find(category => {
+    const currentId = String(category.id || category.categoryId || category.category_id || "").trim();
+    return currentId === cleanId;
+  }) || null;
 }
 
-function makeCartKey(productId, variantId = "", customizationText = "") {
-  return [
-    productId || "",
-    variantId || "",
-    customizationText || ""
-  ].join("__");
+function getCategoryName(categoryId) {
+  const category = getCategory(categoryId);
+  return category?.name || category?.nombre || "";
 }
-    
-    function getPrimaryProduct() {
-      return CONFIG.products.find(product => product.purchasable) || CONFIG.products[0];
+
+function getDefaultCategoryId() {
+  const firstCategory = getSortedCategories()[0];
+  return String(firstCategory?.id || firstCategory?.categoryId || firstCategory?.category_id || "").trim();
+}
+
+function getProductCategoryId(product) {
+  return String(product?.categoryId || product?.category_id || "").trim();
+}
+
+function getActiveCategoryId() {
+  if (!state.activeCategoryId) {
+    state.activeCategoryId = getDefaultCategoryId();
+  }
+
+  return state.activeCategoryId;
+}
+
+function getProductsByCategory(categoryId) {
+  const cleanCategoryId = String(categoryId || "").trim();
+
+  return getSortedProducts().filter(product => {
+    return getProductCategoryId(product) === cleanCategoryId;
+  });
+}
+
+function productRequiresConfig(productId) {
+  const product = getProduct(productId);
+
+  if (!product) return false;
+
+  const requiresConfig = truthyFlag(product.requiresConfig || product.requires_config);
+  const configType = String(product.configType || product.config_type || "none").trim();
+
+  return requiresConfig && configType !== "none";
+}
+
+function getProductOption(productId) {
+  const product = getProduct(productId);
+  const productConfigId = String(product?.configId || product?.config_id || "").trim();
+
+  return (CONFIG.productOptions || []).find(option => {
+    const optionProductId = String(option.productId || option.product_id || "").trim();
+    const optionConfigId = String(option.configId || option.config_id || "").trim();
+    const status = String(option.status || option.estado || "").trim();
+
+    return status !== "hidden" && (
+      optionProductId === productId ||
+      optionConfigId === productConfigId
+    );
+  }) || null;
+}
+
+function getOptionValues(configId) {
+  const cleanConfigId = String(configId || "").trim();
+
+  return clone(CONFIG.optionValues || [])
+    .filter(option => {
+      const optionConfigId = String(option.configId || option.config_id || "").trim();
+      const status = String(option.status || option.estado || "").trim();
+
+      return optionConfigId === cleanConfigId && status !== "hidden";
+    })
+    .sort((a, b) => Number(a.order || a.orden || 99) - Number(b.order || b.orden || 99));
+}
+
+function getOptionValue(optionId, configId = "") {
+  const cleanOptionId = String(optionId || "").trim();
+  const cleanConfigId = String(configId || "").trim();
+
+  return (CONFIG.optionValues || []).find(option => {
+    const currentOptionId = String(option.optionId || option.option_id || "").trim();
+    const currentConfigId = String(option.configId || option.config_id || "").trim();
+
+    if (cleanConfigId) {
+      return currentOptionId === cleanOptionId && currentConfigId === cleanConfigId;
     }
+
+    return currentOptionId === cleanOptionId;
+  }) || null;
+}
+
+function getProductConfig(productId) {
+  const product = getProduct(productId);
+  const option = getProductOption(productId);
+
+  const configId = String(
+    option?.configId ||
+    option?.config_id ||
+    product?.configId ||
+    product?.config_id ||
+    ""
+  ).trim();
+
+  const configType = String(
+    product?.configType ||
+    product?.config_type ||
+    option?.type ||
+    option?.tipo ||
+    "none"
+  ).trim();
+
+  return {
+    product,
+    option,
+    configId,
+    configType,
+    values: getOptionValues(configId)
+  };
+}
+
+function getConfiguredUnitPrice(productId, selectedOptionId = "") {
+  const product = getProduct(productId);
+  const basePrice = Number(product?.price || product?.precio || 0);
+
+  if (!selectedOptionId) return basePrice;
+
+  const configId = String(product?.configId || product?.config_id || "").trim();
+  const optionValue = getOptionValue(selectedOptionId, configId);
+
+  if (!optionValue) return basePrice;
+
+  const finalPrice = optionValue.finalPrice ?? optionValue.precio_final;
+
+  if (finalPrice !== null && typeof finalPrice !== "undefined" && finalPrice !== "") {
+    return Number(finalPrice || 0);
+  }
+
+  const priceExtra = Number(optionValue.priceExtra || optionValue.precio_extra || 0);
+
+  return basePrice + priceExtra;
+}
+
+function buildFlavorConfigurationText(quantitiesByOptionId = {}, configId = "") {
+  const values = getOptionValues(configId);
+
+  return values
+    .map(option => {
+      const optionId = String(option.optionId || option.option_id || "").trim();
+      const quantity = Number(quantitiesByOptionId[optionId] || 0);
+
+      if (quantity <= 0) return "";
+
+      const optionName = option.name || option.nombre || optionId;
+
+      return `${quantity} ${optionName}`;
+    })
+    .filter(Boolean)
+    .join(", ");
+}
+
+function buildFlavorConfigurationJson(quantitiesByOptionId = {}, configId = "") {
+  const values = getOptionValues(configId);
+
+  const items = values
+    .map(option => {
+      const optionId = String(option.optionId || option.option_id || "").trim();
+      const quantity = Number(quantitiesByOptionId[optionId] || 0);
+
+      if (quantity <= 0) return null;
+
+      return {
+        optionId,
+        name: option.name || option.nombre || optionId,
+        quantity
+      };
+    })
+    .filter(Boolean);
+
+  const totalUnits = items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+
+  return {
+    type: "cookie_flavors_6",
+    configId,
+    totalUnits,
+    items
+  };
+}
+
+function buildSingleChoiceConfigurationText(optionId, configId = "") {
+  const option = getOptionValue(optionId, configId);
+
+  return option?.name || option?.nombre || "";
+}
+
+function buildSingleChoiceConfigurationJson(optionId, configId = "") {
+  const option = getOptionValue(optionId, configId);
+
+  if (!option) return null;
+
+  return {
+    type: "promo_combo",
+    configId,
+    selectedOptionId: option.optionId || option.option_id || optionId,
+    selectedOptionName: option.name || option.nombre || "",
+    finalPrice: option.finalPrice ?? option.precio_final ?? null
+  };
+}  
 
 function getCartItem(productId, variantId = "", customizationText = "") {
   const cartKey = makeCartKey(productId, variantId, customizationText);
